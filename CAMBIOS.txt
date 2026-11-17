@@ -1,3 +1,51 @@
+AdvvxClips — CAMBIOS v3.1.5 (2026-11-17)
+==========================================
+
+v3.1.5 — subir cookies.txt para descargar de YouTube en la página en
+línea (lo que el usuario eligió el 2026-11-17: «Agregar a la página la
+opción de subir cookies»). NO toca Discord, Groq/IA, tema, cuentas
+sociales, calidad de descarga, formatos ni karaoke/tarjeta de gancho/
+punch-in zoom. NO cambia nada de la 3.1.4.
+
+Motivo: la página en línea (Render, plan gratis) no tiene navegador,
+así que «Cookies del navegador: Firefox» fallaba (no existe la base
+de datos de cookies de Firefox en el servidor) y YouTube bloqueaba
+las descargas con «verificar que no eres un bot». «Actualizar
+yt-dlp» no quita ese bloqueo.
+
+1. Subir cookies.txt (app/server.py, web/app.js): nuevos endpoints
+   POST /api/settings/cookies (subir) y DELETE /api/settings/cookies
+   (quitar), y GET /api/settings/cookies (estado), los tres SOLO para
+   el administrador (401 sin sesión, 403 si no eres admin). La subida
+   es multipart, máx. 1 MB, y se rechaza con 400 todo lo que no
+   parezca un archivo de cookies Netscape (cabecera «# Netscape HTTP
+   Cookie File» o líneas de 7 campos separados por tabulador). El
+   archivo se guarda en DATA_DIR/cookies.txt y se pone en el ajuste
+   `cookies_file` que ya existía. El GET solo devuelve si hay uno
+   cargado y cuándo se subió; NINGÚN endpoint devuelve el contenido
+   del archivo ni permite descargarlo. En Ajustes > Descarga hay un
+   control nuevo «Subir cookies.txt (YouTube)» con su estado y botón
+   «Quitar», visible solo para el administrador; el campo de texto
+   viejo de cookies_file desaparece (ahora lo gestiona la subida).
+2. La descarga ya usaba el archivo (app/media.py: ytdlp_base pasa
+   `--cookies <archivo>` cuando cookies_file existe, con prioridad
+   sobre cookies_browser; si el archivo no existe, vuelve a las
+   cookies del navegador). Verificado de punta a punta: los trabajos
+   de video Y los de directo (live.py usa el mismo ytdlp_base con
+   los ajustes del trabajo) reciben el argumento. Sin cambios en
+   pipeline.py: cookies_file es un ajuste global, no de proyecto.
+3. Mensaje de error arreglado (app/media.py): cuando YouTube pide
+   verificar que no eres un bot, el mensaje ya no te manda a elegir
+   un navegador (imposible en un servidor); ahora dice que subas tu
+   cookies.txt en Ajustes > Descarga, o que en tu PC elijas tu
+   navegador. Lo mismo en el mensaje de 403/Cloudflare.
+Límites honestos: no se pudo probar una descarga real de YouTube
+con cookies reales de usuario (aquí no existen esas cookies); el
+archivo vive en /data, que en el plan gratis de Render se borra al
+reiniciar o redesplegar (hay que volver a subirlo); UN solo archivo
+de cookies para todos los usuarios: las descargas de los amigos
+también usan la sesión de YouTube del administrador.
+
 AdvvxClips — CAMBIOS v3.1.4 (2026-11-17)
 ==========================================
 

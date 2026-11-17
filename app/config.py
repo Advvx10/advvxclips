@@ -15,7 +15,7 @@ for d in (DATA_DIR, JOBS_DIR):
 
 IS_WIN = sys.platform == "win32"
 NOWIN = {"creationflags": 0x08000000} if IS_WIN else {}  # sin ventanas de consola en Windows
-VERSION = "3.1.4"
+VERSION = "3.1.5"
 # PUBLIC=1: el servidor acepta conexiones desde fuera (para el link de tus
 # amigos). Sin esto solo acepta 127.0.0.1. La API siempre exige sesión.
 PUBLIC = os.environ.get("TBX_PUBLIC") == "1"

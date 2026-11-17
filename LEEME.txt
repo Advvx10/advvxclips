@@ -1,5 +1,5 @@
-ADVVXCLIPS v3.1.3 — cámara ancha arriba, cámara al que habla, cuentas para subir sin salir, cámara completa y recorte perfecto de la cámara
-====================================================================================================================================
+ADVVXCLIPS v3.1.5 — subir cookies.txt para descargar de YouTube en el servidor
+================================================================================
 
 QUÉ ES
 ------
@@ -30,6 +30,25 @@ cuando quieras dar ese paso.
 
 Mientras tanto, en tu PC funciona igual que antes, con tus amigos
 entrando solo si están en tu red y tú les das acceso.
+
+NOVEDADES v3.1.5 (lo que pediste: descargar de YouTube en la página en línea)
+--------------------------------------------------------------------------------
+- Subir cookies.txt: en Ajustes > Descarga ahora hay un botón «Subir
+  cookies.txt (YouTube)», solo lo ve el administrador. Exportas el
+  archivo desde tu navegador con tu sesión de YouTube iniciada
+  (extensión «Get cookies.txt LOCALLY» o similar) y lo subes; el
+  servidor descarga de YouTube con tu sesión y ya no te pide verificar
+  que no eres un bot. La página te dice si hay cookies cargadas y
+  cuándo se subieron, y hay un botón «Quitar» para borrarlas. El
+  archivo nunca se puede descargar ni ver desde la página, solo lo
+  usa yt-dlp para descargar. Ojo, honesto: en el servidor gratis el
+  archivo se borra al reiniciar (hay que volver a subirlo), y es UN
+  solo archivo para todos los usuarios: las descargas de tus amigos
+  también usan tu sesión de YouTube.
+- El mensaje de error cuando YouTube pide verificar que no eres un
+  bot ya no te manda a elegir un navegador (eso en un servidor no
+  existe): ahora te dice que subas tu cookies.txt en Ajustes >
+  Descarga, o que en tu PC elijas tu navegador.
 
 NOVEDADES v3.1.3 (los 5 puntos que pediste)
 --------------------------------------------

@@ -1,3 +1,94 @@
+AdvvxClips — copia verificada v3.1.5 (2026-11-17)
+==================================================
+
+Versión 3.1.5 (subir cookies.txt para descargar de YouTube en la
+página en línea, lo que el usuario eligió el 2026-11-17). VERIFICACIÓN
+DE PUNTA A PUNTA POR LA API COMPLETADA 2026-11-17 por el agente
+verificador (servidor aislado, puerto 8771, TBX_PUBLIC=0, datos
+frescos en ~/workspace/.v315-test-data, yt-dlp sustituido por un
+shim vía TBX_YTDLP que registra sus argumentos y falla rápido).
+
+1. Sanidad
+- python3 -m py_compile app/*.py: OK.
+  node --check web/app.js: OK (un paréntesis de más en el primer
+  intento del control nuevo se detectó aquí y se corrigió).
+- app/config.py: VERSION = "3.1.5". Sin cambios en formatos,
+  layouts, Groq/IA, tema, cuentas sociales ni calidad.
+
+2. Endpoints de cookies (POST /api/settings/cookies, GET, DELETE)
+- Sin sesión: 401. Usuario amigo (aprobado, no admin): 403 en
+  POST, GET y DELETE. Admin: todo OK.
+- Admin sube un archivo que no es cookies: 400 («Eso no parece un
+  archivo cookies.txt (formato Netscape)...»).
+- Admin sube 1,5 MB: 400 («...demasiado grande (máx. 1 MB).»).
+- Admin sube cookies.txt válido (formato Netscape, valores falsos):
+  200, {"ok": true, "loaded": true, "uploaded_at": "17/11/2026
+  16:54"}; archivo guardado en DATA_DIR/cookies.txt; ajuste
+  cookies_file = ruta absoluta del archivo (visto en /api/settings).
+- GET /api/settings/cookies devuelve solo {"loaded": true,
+  "uploaded_at": "..."}: NUNCA el contenido del archivo. Ningún
+  endpoint sirve ni devuelve el archivo (revisado en server.py).
+- DELETE: 200, archivo borrado del disco y cookies_file = "".
+
+3. La descarga recibe --cookies (prueba con el shim de yt-dlp)
+- Trabajo de video 1 (YouTube, cookies cargadas): el shim registró
+  `--cookies /home/hatch/workspace/.v315-test-data/cookies.txt`
+  en el comando real de descarga. El trabajo falló rápido en la
+  descarga porque el shim falla a propósito (esperado: no es un
+  fallo de la función).
+- Trabajo de video 2 (cookies borradas): el comando NO lleva
+  --cookies ni --cookies-from-browser. El borrado limpia el ajuste.
+- Trabajo de directo 3 (kick.com/rdjavi, cookies cargadas): el
+  comando de grabación también lleva --cookies con la misma ruta.
+  Los directos usan el mismo ytdlp_base con los ajustes del trabajo.
+- Prueba unitaria de ytdlp_base: con cookies_file existente pasa
+  --cookies <ruta> y tiene prioridad sobre cookies_browser; con
+  archivo inexistente vuelve a --cookies-from-browser; sin nada no
+  pasa ningún argumento de cookies.
+- Mensajes de error (prueba unitaria de explain_ytdlp_error): el de
+  «no eres un bot» ahora dice «En Ajustes > Descarga sube tu archivo
+  cookies.txt (expórtalo desde tu navegador con la sesión de YouTube
+  iniciada) o, en tu PC, elige tu navegador en 'Cookies del
+  navegador' y reintenta.»; el de 403/Cloudflare también menciona
+  subir el cookies.txt.
+
+4. Interfaz (app.js servido por el servidor, sin navegador real)
+- En el /app.js servido aparecen: «Subir cookies.txt (YouTube)»,
+  «/api/settings/cookies» (3 veces), «Solo el administrador puede
+  subir el archivo de cookies», «Cookies cargadas», «Get cookies.txt
+  LOCALLY» y «se borra al reiniciar». El campo de texto viejo
+  («o archivo cookies.txt (opcional)») ya no existe. El control solo
+  se muestra si state.me.is_admin; si no, se muestra el aviso de
+  solo-administrador.
+
+5. Regresión 3.1.4 (nada de eso se tocó, pero se comprobó que sigue
+   andando): trabajo 4 con el podcast de 77,3 s subido como archivo,
+   formato Entrevista, Rápida/tiny, idioma es → done, 2 clips:
+   36,5 s y 26,3 s, 1080x1920, 30 fps, AAC con audio. Cuadros
+   revisados: t=5 s pantalla dividida (mujer arriba, hombre abajo)
+   con subtítulos quemados «TAL VEZ PUEDE»; t=20 s plano solo de la
+   mujer con «LLEGAR A ESE»; sin marca de agua. (Los textos blancos
+   pixelados de la esquina son del video original, no de la app.)
+
+6. Límites honestos (léeme antes de probar en el servidor real)
+- NO se pudo probar una descarga real de YouTube con cookies reales
+  de usuario: aquí no existen cookies de usuario; el archivo usado
+  en las pruebas era formato Netscape válido con valores falsos.
+  La primera descarga real en Render con las cookies de adelvis es
+  la prueba que falta.
+- Los trabajos 1-3 fallaron en la descarga A PROPÓSITO (el shim):
+  eso prueba que el argumento se pasa, no que YouTube acepte las
+  cookies.
+- El archivo vive en /data: en el plan gratis de Render se borra al
+  reiniciar el servicio o al redesplegar. Hay que volver a subirlo
+  después de cada reinicio/redespliegue. (En su PC no se borra.)
+- UN solo archivo de cookies para todos los usuarios: las descargas
+  de los amigos también usan la sesión de YouTube del administrador.
+- La interfaz nueva se comprobó en el JS servido (cadenas presentes),
+  no renderizada en un navegador real.
+- La regresión cubrió el formato Entrevista con un video subido; los
+  demás formatos de la 3.1.4 no se volvieron a probar (no se tocaron).
+
 AdvvxClips — copia verificada v3.1.4 (2026-11-17)
 ==================================================
 

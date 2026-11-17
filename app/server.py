@@ -423,6 +423,71 @@ def watermark_post(h):
     return {"ok": True, "custom": True, "file": "watermark.png"}
 
 
+# ------------------------------------------------------------------ cookies.txt
+# v3.1.5: subir el archivo cookies.txt (exportado del navegador con la
+# sesión de YouTube iniciada) para que el servidor descargue con esa
+# sesión. En un servidor no hay navegador, así que "Cookies del
+# navegador" no sirve ahí. Solo el administrador sube/quita el archivo.
+# El archivo NUNCA se devuelve por ningún endpoint: el GET solo dice
+# si hay uno cargado y cuándo se subió.
+COOKIES_FILE = "cookies.txt"
+COOKIES_MAX_BYTES = 1024 * 1024  # 1 MB
+
+
+def _looks_like_cookies(data: bytes) -> bool:
+    """True si los bytes parecen un archivo de cookies Netscape
+    (cookies.txt exportado de un navegador)."""
+    text = data.decode("utf-8", "ignore")
+    if "# Netscape HTTP Cookie File" in text:
+        return True
+    for line in text.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = line.split("\t")
+        if len(parts) >= 7 and parts[4].strip().isdigit():
+            return True
+    return False
+
+
+def _cookies_status() -> dict:
+    p = config.DATA_DIR / COOKIES_FILE
+    if not p.exists():
+        return {"loaded": False, "uploaded_at": None}
+    return {"loaded": True,
+            "uploaded_at": time.strftime("%d/%m/%Y %H:%M", time.localtime(p.stat().st_mtime))}
+
+
+@route("GET", "/api/settings/cookies")
+def cookies_get(h):
+    _require_admin(h)
+    return _cookies_status()
+
+
+@route("POST", "/api/settings/cookies")
+def cookies_post(h):
+    _require_admin(h)  # como los ajustes: solo el administrador sube sus cookies de YouTube
+    name, data = _multipart_file(h)
+    if not data:
+        raise ApiError(400, "El archivo está vacío.")
+    if len(data) > COOKIES_MAX_BYTES:
+        raise ApiError(400, "El archivo de cookies es demasiado grande (máx. 1 MB).")
+    if not _looks_like_cookies(data):
+        raise ApiError(400, "Eso no parece un archivo cookies.txt (formato Netscape). Expórtalo desde tu navegador con la sesión de YouTube iniciada.")
+    dest = config.DATA_DIR / COOKIES_FILE
+    dest.write_bytes(data)
+    db.set_settings({"cookies_file": str(dest)})
+    return {"ok": True, **_cookies_status()}
+
+
+@route("DELETE", "/api/settings/cookies")
+def cookies_delete(h):
+    _require_admin(h)
+    (config.DATA_DIR / COOKIES_FILE).unlink(missing_ok=True)
+    db.set_settings({"cookies_file": ""})
+    return {"ok": True, "loaded": False, "uploaded_at": None}
+
+
 def _version(cmd):
     try:
         out = subprocess.run(cmd, capture_output=True, timeout=15, **config.NOWIN)

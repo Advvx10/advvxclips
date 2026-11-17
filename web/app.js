@@ -543,7 +543,36 @@ async function pageAjustes() {
       })()),
     h('div', { class: 'card' }, h('h2', {}, '⬇ Descarga de videos y directos'), h('div', { class: 'grid2' },
       sel('cookies_browser', 'Cookies del navegador', [['', 'No usar'], ['firefox', 'Firefox (recomendado)'], ['chrome', 'Chrome'], ['edge', 'Edge'], ['brave', 'Brave'], ['opera', 'Opera']], 'Si YouTube o Kick bloquean la descarga ("no eres un bot", 403), inicia sesión en ese navegador y elígelo aquí.'),
-      txt('cookies_file', 'o archivo cookies.txt (opcional)'), sel('max_height', 'Calidad máxima de descarga', [[720, '720p'], [1080, '1080p'], [1440, '1440p'], [2160, '4K']])), h('div', { style: { marginTop: '12px' } }, ytBtn)),
+      (() => { // subir cookies.txt (v3.1.5): solo el administrador; el servidor descarga de YouTube con esa sesión
+        if (!state.me || !state.me.is_admin) return h('div', { class: 'hint' }, 'Solo el administrador puede subir el archivo de cookies.');
+        const note = h('div', { class: 'hint' }, 'Comprobando archivo de cookies…');
+        const file = h('input', { type: 'file', accept: '.txt,text/plain' });
+        const up = h('button', { class: 'btn g sm', onclick: async (e) => {
+          if (!file.files[0]) { toast('Elige tu archivo cookies.txt.', 'err'); return; }
+          e.target.disabled = true;
+          try {
+            const fd = new FormData(); fd.append('file', file.files[0]);
+            const r = await fetch('/api/settings/cookies', { method: 'POST', headers: { 'X-TBX': '1' }, body: fd });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(d.detail || ('Error ' + r.status));
+            toast('Cookies subidas: YouTube descargará con tu sesión', 'ok');
+            note.textContent = 'Cookies cargadas (subidas ' + (d.uploaded_at || 'ahora') + '). YouTube descargará con tu sesión.';
+          } catch (err) { toast(err.message, 'err'); } finally { e.target.disabled = false; }
+        } }, 'Subir cookies.txt');
+        const rm = h('button', { class: 'btn d sm', onclick: async (e) => {
+          if (!confirm('¿Quitar el archivo de cookies? YouTube volverá a descargar sin sesión.')) return;
+          e.target.disabled = true;
+          try {
+            const r = await fetch('/api/settings/cookies', { method: 'DELETE', headers: { 'X-TBX': '1' } });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(d.detail || ('Error ' + r.status));
+            toast('Archivo de cookies eliminado', 'ok');
+            note.textContent = 'Sin archivo de cookies: YouTube descarga sin sesión (puede pedir verificar que no eres un bot).';
+          } catch (err) { toast(err.message, 'err'); } finally { e.target.disabled = false; }
+        } }, 'Quitar');
+        api('/api/settings/cookies').then((r) => { note.textContent = r.loaded ? 'Cookies cargadas (subidas ' + (r.uploaded_at || '') + '). YouTube descargará con tu sesión.' : 'Sin archivo de cookies: YouTube descarga sin sesión (puede pedir verificar que no eres un bot).'; }).catch(() => { note.textContent = 'No se pudo comprobar el archivo de cookies.'; });
+        return h('div', {}, h('label', {}, 'Subir cookies.txt (YouTube)'), file, h('div', { style: { marginTop: '6px', display: 'flex', gap: '8px' } }, up, rm), note, h('div', { class: 'hint' }, 'Exporta cookies.txt desde Firefox/Chrome con tu sesión de YouTube iniciada (extensión "Get cookies.txt LOCALLY" o similar). El archivo queda en el servidor y se usa para todas las descargas; en el servidor gratis se borra al reiniciar.'));
+      })(), sel('max_height', 'Calidad máxima de descarga', [[720, '720p'], [1080, '1080p'], [1440, '1440p'], [2160, '4K']])), h('div', { style: { marginTop: '12px' } }, ytBtn)),
     h('div', { class: 'card' }, h('h2', {}, '📡 Directos (Live)'), h('div', { class: 'grid2' }, num('live_segment_s', 'Tamaño de segmento (s)'), num('live_min_score', 'Puntaje mínimo para auto-clip'), num('live_max_clips_per_hour', 'Máx. clips por hora'), num('live_wait_minutes', 'Esperar inicio del directo (min)')),
       h('div', { class: 'hint' }, 'Segmentos más cortos = clips más rápidos tras el momento, pero más carga de transcripción.')),
     h('div', { class: 'card' }, h('h2', {}, '🩺 Diagnóstico'), diag(!!sys.ffmpeg, 'ffmpeg: ' + (sys.ffmpeg || 'NO encontrado')), diag(!!sys.ytdlp, 'yt-dlp: ' + (sys.ytdlp || 'NO encontrado')),

@@ -697,13 +697,15 @@ def is_direct_media(url: str) -> bool:
 def explain_ytdlp_error(err: str) -> str:
     e = err.lower()
     if "sign in to confirm" in e or "not a bot" in e:
-        return ("YouTube pide verificar que no eres un bot. En Ajustes > Descarga elige tu navegador en "
-                "'Cookies del navegador' (con sesión de YouTube iniciada) y reintenta.")
+        return ("YouTube pide verificar que no eres un bot. En Ajustes > Descarga sube tu archivo "
+                "cookies.txt (expórtalo desde tu navegador con la sesión de YouTube iniciada) o, en tu "
+                "PC, elige tu navegador en 'Cookies del navegador' y reintenta.")
     if "could not copy chrome cookie" in e or "cookie database" in e:
         return "No se pudieron leer las cookies de Chrome/Edge (están bloqueadas). Cierra el navegador o usa Firefox."
     if "403" in e or "cloudflare" in e or "forbidden" in e:
-        return ("El sitio bloqueó la descarga (403/Cloudflare). Prueba: Ajustes > Descarga > Cookies del navegador "
-                "(Firefox funciona mejor) y actualiza yt-dlp (se actualiza al ejecutar iniciar.bat).")
+        return ("El sitio bloqueó la descarga (403/Cloudflare). Prueba: Ajustes > Descarga > subir tu "
+                "archivo cookies.txt, o Cookies del navegador (Firefox funciona mejor) y actualiza "
+                "yt-dlp (se actualiza al ejecutar iniciar.bat).")
     if "private" in e or "members-only" in e or "join this channel" in e:
         return "El video es privado o solo para miembros."
     if "unsupported url" in e:
