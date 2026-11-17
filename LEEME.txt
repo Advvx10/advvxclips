@@ -1,0 +1,165 @@
+ADVVXCLIPS v3.1.3 — cámara ancha arriba, cámara al que habla, cuentas para subir sin salir, cámara completa y recorte perfecto de la cámara
+====================================================================================================================================
+
+QUÉ ES
+------
+AdvvxClips (antes SamuelClip): pega el link de un video o directo de
+YouTube, Kick o Twitch y saca los mejores clips verticales 9:16, listos
+para las redes. Sin licencia ni activación: entras con tu cuenta.
+
+PRIMEROS PASOS (en tu PC)
+-------------------------
+1. Cierra AdvvxClips por completo si lo tienes abierto.
+2. Borra la carpeta vieja (SamuelClip). OJO: antes descarga desde
+   Biblioteca los clips que quieras guardar, porque al borrar la carpeta
+   se borran también los proyectos y clips que hay dentro.
+3. Descomprime este zip donde quieras (por ejemplo, el Escritorio).
+4. Doble clic a iniciar.bat. La primera vez instala dependencias y
+   descarga ffmpeg (unos 150 MB): déjalo quieto unos minutos.
+5. Se abre el navegador. La PRIMERA cuenta que se crea es la tuya, el
+   ADMINISTRADOR. Tus amigos crean su cuenta y TÚ los apruebas en
+   Usuarios (menú de la izquierda, solo lo ves tú).
+
+PARA TUS AMIGOS (el link)
+-------------------------
+Para que tus amigos entren desde cualquier lado con un link, AdvvxClips
+tiene que vivir en un servidor en internet, no solo en tu PC. La app ya
+está lista para eso (cuentas, aprobación, perfiles, login obligatorio),
+pero hay que ponerla en un servidor. Pregúntale a Anuel por el hosting
+cuando quieras dar ese paso.
+
+Mientras tanto, en tu PC funciona igual que antes, con tus amigos
+entrando solo si están en tu red y tú les das acceso.
+
+NOVEDADES v3.1.3 (los 5 puntos que pediste)
+--------------------------------------------
+- Cámara de reacción ancha arriba: en el Dúo, la cámara ya no sale
+  chiquita en una esquina; va arriba a todo el ancho, con todo el
+  cuerpo, el micrófono y el cuarto, y el video abajo grande. Y el
+  clip solo agarra tramos donde la cámara está todo el tiempo, para
+  que no se pierda en el medio.
+- Cámara que cambia a quien habla: en entrevistas y podcasts, el
+  encuadre corta solo a la persona que está hablando, como en el
+  clip de tu amigo. Es una aproximación (acierta ~la mitad de los
+  turnos), no una diarización perfecta.
+- Apartado de Cuentas: conecta TikTok, Facebook, Instagram y
+  YouTube desde la página, sube el clip sin salir de ahí, programa
+  la hora, y ponle título y hashtags. Cada red pide sus propias
+  credenciales de desarrollador; los pasos exactos están en la
+  página. La subida en vivo no se pudo probar sin cuentas reales.
+- Formato de cámara completa: la persona hablando llena toda la
+  pantalla vertical, sin juego abajo.
+- Recorte perfecto de la cámara para gaming: la IA detecta la caja
+  exacta de la cámara y la recorta limpia, sin gameplay dentro,
+  lista para el GTA VI.
+
+NOVEDADES v3.1.2 (los 7 puntos que pediste)
+--------------------------------------------
+- El Dúo ya no duplica el video cuando no hay cara: si no se ve un
+  rostro, el clip sale en vertical y te avisa, nunca con el mismo
+  contenido arriba y abajo.
+- La cámara chiquita de la esquina ya se detecta: el Dúo sigue la
+  cara de rdjavi aunque salga pequeña, con gorra y luz rosada.
+- Subtítulos en español fijo: ya no se confunde el idioma.
+- Títulos que dicen de qué trata el clip: sin IA son la mejor frase
+  del clip (nunca una etiqueta como «Se pelean en pleno directo»);
+  con tu clave gratis de Groq en Ajustes > IA salen como resúmenes
+  del tema («Así se prepara la pasta»).
+- Sin marca de agua por defecto: los clips salen limpios. Si la
+  quieres, se enciende en Ajustes > Formato y subtítulos.
+- Dos personas: pantalla partida en dos, una arriba y otra abajo,
+  cada una siguiendo su cara. Más de dos: se siguen dividiendo.
+- Reacción o gaming: la cámara de la persona arriba y el juego o
+  el video debajo.
+- Ojo, honesto: con Rápida (tiny) la transcripción sigue siendo
+  imperfecta; con Alta se oye mejor. Y los proyectos de la 3.1.1
+  siguen sirviendo, no hay que recrearlos.
+
+NOVEDADES v3.1.1 (hotfix)
+-------------------------
+- Arreglado el error del formato Dúo cuando el video no tiene cara
+  visible: antes el render fallaba con un error de ffmpeg y el
+  proyecto quedaba en Error con 0 clips. Ahora usa un recorte
+  centrado y el clip sale bien.
+
+NOVEDADES v3.1.0
+---------------
+- Detector de momentos: los clips ya salen de lo más gracioso, las
+  peleas y las discusiones. Cada clip trae su tipo (Risa, Discusión,
+  Pelea, Gritos, Idea clave, Dato curioso) y una línea de resumen con
+  palabras literales de lo que se dice.
+- Títulos que resumen: el título dice de qué trata el clip («Se pelean
+  en pleno directo»), no una frase agarrada a lo loco. Ojo, honesto:
+  con el motor integrado el título es una plantilla según el momento;
+  para títulos con las palabras reales del clip, configura una IA en
+  Ajustes > IA (Ollama local o Groq con clave gratis).
+- Modo TikTok (por defecto): clips de 20–40 s que arrancan en el
+  gancho, subtítulos quemados, listos para TikTok. Se apaga en Crear >
+  Opciones o en Ajustes > Clips.
+- Formato Dúo / Reacción: en Crear > Opciones elige "Dúo / Reacción".
+  Arriba sale el que más se ve o más habla (su cara, en primer plano)
+  y abajo el otro contenido. Perfecto para reacciones y para videos
+  jugando con otra persona.
+- Cámara gaming arreglada: la cajita sigue la cara donde se mueva, y
+  si el detector no la ve con seguridad, se queda en la esquina fija
+  (antes mostraba gameplay en vez de la cara en algunos tramos).
+- Tarjetas nuevas en Biblioteca: cada clip con 🔥 puntaje viral,
+  título grande en amarillo sobre la miniatura, chip del momento,
+  resumen, duración y botones Editar y Exportar. Los clips se agrupan
+  por proyecto y los lives tienen su sección «Tus Lives».
+- Marca de agua: en Ajustes > Formato y subtítulos > «Marca de agua»
+  elige Logo ClipsViralesRD_ (por defecto, abajo a la derecha), Texto
+  o Ninguna. El logo se pone tal cual, con su fondo azul a negro.
+- Para directos en español, mejor el perfil Alta (o fija el idioma en
+  «es»): con Rápida (tiny) la detección de idioma a veces falla.
+
+NOVEDADES v3.0.0
+---------------
+- Nombre nuevo: AdvvxClips. Tema nuevo: azul que degrada en negro.
+- Cuentas con aprobación: cada persona tiene su perfil; cada uno ve
+  solo SUS proyectos y SUS clips. El administrador aprueba, quita el
+  acceso o elimina cuentas desde Usuarios.
+- Formato gaming: en Crear > Opciones elige "Gaming · cámara en
+  esquina". El gameplay llena el vertical 9:16 y la cámara del jugador
+  sale chiquita arriba a la izquierda, con borde azul. En "Esquina de
+  la cámara" elige dónde está la cámara dentro del video original
+  (arriba a la izquierda por defecto).
+- Más rápido en videos largos: la transcripción ahora parte el audio
+  en trozos y usa todos los núcleos de la CPU (PCs con 4 o más núcleos).
+  Se puede apagar en Ajustes > Transcripción.
+- Para videos de más de 1 hora sigue valiendo lo de siempre: usa el
+  perfil Rápida (Crear > Opciones > Calidad de los clips), que usa el
+  modelo tiny y es el más veloz. La transcripción es lo que más tarda;
+  60 fps NO hace que vaya más rápido, solo se ve mejor.
+
+REQUISITOS
+----------
+Windows 10/11, Python 3.10–3.13 (recomendado 3.12.10, con "Add to PATH"),
+Node.js LTS (para que YouTube entregue los formatos) y Firefox con tu
+sesión de YouTube si YouTube pide verificar que no eres un bot
+(Ajustes > Descarga > Cookies del navegador: Firefox, con Firefox
+cerrado).
+
+MODO CANAL
+----------
+En Crear clips elige "Canal de YouTube", pega el link del canal
+(p. ej. youtube.com/@canal) y elige cuántos videos procesar (1 a 20,
+por defecto 5). Se listan sus videos más recientes y se crean clips de
+cada uno, uno a la vez; si un video falla, los demás siguen. Los clips
+quedan agrupados por creador.
+
+EDITOR
+------
+En Biblioteca pulsa "Seleccionar clips" y "Abrir en el editor" para
+cortar, corregir y sincronizar subtítulos, poner música, overlays, zoom
+y seguimiento de rostros/objetos, con vista previa en tiempo real.
+Exporta a la Biblioteca.
+
+COPIA LIMPIA PARA COMPARTIR
+Esta carpeta no contiene clips, videos, proyectos, configuraciones
+personales ni entorno virtual. La app crea data automáticamente y el
+iniciador instala las dependencias en cada PC.
+Requisitos: Windows de 64 bits, Python 3.12 de 64 bits e Internet para
+la instalación inicial. Antes de extraer: Propiedades del ZIP >
+Desbloquear (si aparece) > Aplicar. Después: Extraer todo y ejecutar
+iniciar.bat desde la carpeta extraída. Mantener la consola abierta.

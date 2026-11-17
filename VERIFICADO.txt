@@ -1,0 +1,417 @@
+AdvvxClips — copia verificada v3.1.4 (2026-11-17)
+==================================================
+
+Versión 3.1.4 (los 5 puntos confirmados por el usuario, «Sí, así mismo»,
+2026-11-17). VERIFICACIÓN DE PUNTA A PUNTA POR LA API COMPLETADA
+2026-11-17 por el agente verificador (servidor aislado, puerto 8770,
+TBX_PUBLIC=0, datos frescos en ~/workspace/.v314-test-data).
+Trabajo local de código hecho en esta entrega (sin trabajos API):
+
+1. Sanidad
+- python3 -m py_compile app/*.py: OK (repetido por el verificador).
+  node --check web/app.js: OK (repetido por el verificador).
+- app/config.py: VERSION = "3.1.4", max_height 1080, content_type
+  "general" por defecto, watermark_opacity 80, watermark_image "".
+
+2. Filtros ffmpeg nuevos (renders locales cortos, video sintético
+   640x360 de 10 s, ffmpeg 8.1.2 — NO un trabajo de la app):
+- Entrevista split=4 con expresiones enable: OK, 1080x1920, 10,0 s,
+  con audio. Cuadros revisados: a t=4,5 s (tramo dividido) la mitad
+  superior y la inferior son dos recortes distintos; a t=2 s y t=8 s
+  (planos solos) las dos mitades son el mismo encuadre continuo.
+- Entrevista solo (sin tramos divididos, camino anterior): OK,
+  1080x1920, 10,0 s, con audio.
+- Logo con colorchannelmixer aa=0.8: OK, 1080x1920, 10,0 s, con audio.
+- Texto con drawtext alpha=0.5: OK, 1080x1920, 10,0 s, con audio.
+
+3. Puntuación por tipo de contenido (prueba unitaria con palabras
+   sintéticas, 60 s, con pelea en 20-30 s): general 79, entrevista 87
+   (+8 en Pelea), resumen 86 con ventana más larga (21,6-60,4 s),
+   gaming 87 (energía alta), película 79 (sin cambio). Mapa IA:
+   entrevista/podcast→interview, resumen→narration,
+   pelicula/gaming→general.
+
+4. Servidor (instancia aislada, TBX_DATA temporal, puerto 18765):
+- GET /api/settings/watermark sin imagen: {"custom": false}.
+- POST /api/settings/watermark con PNG: OK, guarda watermark.png y
+  GET después dice {"custom": true}; subida .gif: 400.
+- POST /api/jobs/video con content_type "bogus": 400.
+- PUT /api/settings con content_type "bogus": 400; con
+  {"content_type":"entrevista","watermark_opacity":50,
+  "max_height":1080}: guardado correctamente.
+
+5. TRABAJOS API (verificador, puerto 8770, idioma «es» en todos)
+- Entorno: yt-dlp NO estaba instalado en esta VM; se instaló
+  2026.10.26 en el venv de pruebas y se rearrancó el servidor con
+  TBX_YTDLP. Las subidas con urllib/http.client de Python fallaron
+  a veces con BrokenPipeError; con curl funcionaron siempre.
+  whisper_model NO es anulable por proyecto (no está en
+  pipeline.OVERRIDABLE: el valor por proyecto se descarta en
+  silencio); los trabajos 1-2 usaron base (Alta por defecto) y del
+  3 en adelante tiny (ajuste global PUT /api/settings) con
+  parallel_transcribe=false. El servidor murió una vez a mitad de
+  la verificación (después del trabajo 9, sin rastro en el log;
+  memoria del VM al 80%); se rearrancó con -u, la base de datos
+  estaba intacta y ningún trabajo se perdió.
+- Trabajo 1 — Entrevista, podcast OpusClip 77,3 s, 3 personas,
+  layout speaker, content_type entrevista: 2 clips, 20,2 s
+  (2,72-22,92, puntos 87) y 22,8 s (50,38-73,21, puntos 53).
+  1080x1920, 60 fps, con audio, subtítulos quemados. El cambio de
+  plano solo funciona (hombre → mujer → hombre; segmentos
+  recalculados: clip 1 solo 11,6 s + solo 8,6 s; clip 2 solo
+  8,4 s + 1,7 s + 12,7 s). NINGÚN tramo dividido en ninguno de
+  los dos clips; recalculado sobre los 77,3 s completos: 0 splits.
+  El split NO se disparó con personas reales en este video.
+- Trabajo 2 — Cámara completa, El Dotol 49,8 s, layout camara,
+  content_type general: 1 clip, 32,6 s (0-32,6, puntos 82).
+  1080x1920, 60 fps, con audio, subtítulos quemados. Cara
+  centrada a pantalla completa (Andrea) en todos los cuadros
+  revisados (t=1, 8, 16, 24, 31), sin duplicación, sin marca de
+  agua (modo none). PASA de punta a punta.
+- Trabajo 3 — Sin rostro, pelota roja 41,9 s, layout speaker,
+  content_type general: 1 clip, 39,9 s (1,98-41,9, puntos 72).
+  HALLAZGO: track_faces encontró 3 «caras» falsas (las pelotas
+  numeradas / el neón) y speaker_segments marcó 2 personas con un
+  tramo DIVIDIDO (tupla) en 22,8-30,2 s. Los cuadros a t=24 y
+  t=26 muestran el grafo split=4 de la app: dos bandas de
+  1080x960, cada una centrada en una pelota distinta. El split
+  SÍ se dispara de punta a punta por la API, pero aquí con caras
+  falsas. NO apareció ningún aviso en el mensaje del trabajo ni
+  en los eventos: la caída a vertical con aviso NO se activó
+  porque el detector creyó ver 2 personas. Los tramos solo son
+  recortes con zoom sobre la pelota / el neón.
+- Trabajo 9 — Entrevista, 3 personas (stream GTA) 60,1 s, layout
+  speaker, content_type entrevista: 1 clip, 33,9 s (16,84-50,73,
+  puntos 94). Segmentos solo 0/1 alternando, 0 splits. El cambio
+  de plano funciona pero en este video las cajas de cámara son
+  pequeñas y el recorte queda casi a pantalla completa, así que
+  el salto entre hablantes es sutil.
+- Trabajo 6 — Marca de agua imagen, El Dotol, layout camara,
+  watermark_mode logo, opacity 50 (imagen subida antes con POST
+  /api/settings/watermark: el logo aprobado): 1 clip, 31,8 s
+  (14,69-46,44, puntos 83). Logo visible abajo a la derecha al
+  ~50% de opacidad en todos los cuadros revisados (t=2, 15, 30).
+  PASA. Re-render desde Biblioteca (POST /api/clips/5/rerender):
+  OK, la marca sigue ahí al 50%; nota: el encuadre a t=15 cambió
+  (hombre → Andrea) tras el re-render, que vuelve a calcular las
+  caras — vaivén de atribución de hablante, ver límites.
+- Trabajo 7 — Marca de agua texto, pelota roja, layout blur,
+  watermark_mode text «ClipsViralesRD_», opacity 50: 1 clip,
+  39,9 s (puntos 72). Texto visible abajo a la derecha,
+  semitransparente, en los cuadros revisados (t=3, 20, 38). PASA.
+- Marca APAGADA (trabajos 1, 2, 3, 9, 10, modo none): sin marca
+  en ningún cuadro revisado. PASA.
+- Trabajo 10 — Regresión Dúo, segmento Bugatti 90 s (archivo
+  local 640x360, el mismo de la 3.1.2), layout duo, content_type
+  gaming: 2 clips, 36,0 s (43,23-79,26, puntos 94) y 32,5 s
+  (7,71-40,21, puntos 62); mismos rangos que en la 3.1.2.
+  1080x1920, 60 fps, con audio, subtítulos quemados, sin marca.
+  Clip 8: cámara ancha arriba (rdjavi, micrófono, habitación) y
+  juego abajo, sin duplicación — PASA. Clip 9: el panel superior
+  muestra JUEGO (sin cámara) en t=2 y t=15; el video fuente
+  tampoco tiene cámara en esos instantes (cuadros del fuente a
+  9,7 s y 22,7 s lo confirman). La puerta del Dúo dejó pasar la
+  ventana (detect_cam_box tercios [0,62, 0,68, 0,59], todos
+  ≥ 0,15; ningún rechazo en los eventos). Es el límite honesto
+  ya anotado en la 3.1.3 (la puerta no ve ausencias), aquí más
+  largo que los «2-3 s» de entonces: en el clip 9 la cámara falta
+  en buena parte de la primera mitad. NO es una regresión de la
+  3.1.4 (mismos rangos de clip que en la 3.1.2, puerta sin tocar).
+- Tipo de contenido (mismo texto, highlight.candidates con las
+  134 palabras reales del trabajo 1): general 84/50, entrevista
+  87/53, podcast 87/53, gaming 88/53, resumen 86/54 (la 2.ª
+  ventana se mueve de 50,6 a 39,1 s), película 84/50 (= general).
+  El tipo se guarda con el proyecto (comprobado en la base de
+  datos, trabajos 1, 9 y 10). Las puntuaciones cambian un poco
+  por tipo; la selección NO cambia, salvo resumen que mueve una
+  ventana. PUT /api/settings con content_type «noexiste» → 400
+  (re-verificado en el puerto 8770). El 400 de POST
+  /api/jobs/video con tipo falso es del punto 4, no se repitió.
+- Marca de agua por API (re-verificado, puerto 8770): GET antes
+  {"custom": false}; POST con el logo PNG → {"ok": true,
+  "custom": true}; GET después {"custom": true,
+  "file": "watermark.png"}; archivo guardado en
+  DATA_DIR/watermark.png (1.049.010 bytes, 1600x1600).
+- Calidad: TODOS los clips verificados son 1080x1920, 60 fps
+  (perfil Alta, CRF 18) por ffprobe, duración dentro de 20-40 s
+  salvo el clip de la pelota (39,9 s, dentro) — todos dentro.
+  La descarga a 1080p NO quedó verificada de punta a punta (ver
+  punto 6): el código aplica -S res:1080 desde max_height y el
+  trabajo 5 eligió el formato f299 (1080p60) y bajó 888 MB (53%)
+  antes de atascarse; ffprobe del fuente 1080p: NO verificado.
+
+6. NO VERIFICADO / LÍMITES HONESTOS (en plano)
+- Descarga a 1080p por la API: trabajo 5 (URL Bugatti) se atascó
+  al 53% y acabó en error «Sin conexión a internet o el sitio no
+  responde»; trabajo 8 (reintento) falló rápido; reanudación por
+  CLI llegó al ~68% (1,05 GB) y murió con 10 timeouts de
+  fragmento seguidos. YouTube limita mucho esta IP. La selección
+  de formato 1080p sí está probada (f299), la descarga completa
+  y su ffprobe NO.
+- Split con personas REALES hablando a la vez: nunca se disparó
+  en los dos videos reales probados (podcast 77 s: 0 splits;
+  tres personas 34 s: 0 splits). Solo se disparó con caras
+  falsas (pelota). Falta un video con cruce de voces claro para
+  confirmar el caso real; el umbral (ambas ≥ 1,5, la 2.ª ≥ 0,5x
+  la 1.ª) puede ser demasiado estricto, o estos videos apenas
+  tienen solape real.
+- Sin-rostro en Entrevista: poco fiable — detecciones falsas de
+  cara (pelotas, neón) evitan la caída a vertical y suprimen el
+  aviso. El Dúo sí tiene su validación aparte (_valid_duo_faces).
+- Atribución de hablante ~50% (ya anotado en CAMBIOS): el
+  re-render puede encuadrar a otra persona (trabajo 6, t=15).
+- Puerta del Dúo: deja pasar ventanas con ausencias largas de
+  cámara (trabajo 10, clip 9).
+- Títulos: motor integrado, sin clave Groq en el servidor de
+  pruebas; los títulos salen de la transcripción y se oyen mal
+  con base y con tiny («No, sí, ahí hay el moso, claro que sí»,
+  «¡Y tienen un otro demacial o el moso»): español dominicano
+  rápido, aviso conocido, peor con tiny.
+- No probado en esta entrega: formato Discord (no es parte de la
+  3.1.4); subidas sociales en vivo; Dúo de 3+ personas por API;
+  recorte gaming perfecto por API (solo renders directos en la
+  3.1.3); edición de clips en el editor. UI nueva (desplegable
+  de tipo de contenido y sección de marca de agua en Crear
+  opciones, subida de imagen en Ajustes) comprobada solo en
+  código (web/app.js) y por API, no en un navegador real.
+
+AdvvxClips — copia verificada v3.1.3 (2026-11-14)
+==================================================
+
+Versión 3.1.3 (los 5 puntos confirmados por el usuario, «dale ya»,
+2026-11-14). Entorno de pruebas: venv con opencv-python-headless
+4.14.0, faster-whisper, av 16.1.0 y ffmpeg 8.1.2. Datos de prueba en
+~/workspace/.v313-test-data/ (renders directos) y
+~/workspace/.v313-social-test-data/ (servidor social aislado, puerto
+8767). La carpeta data/ de la app nunca se tocó.
+
+1. Sanidad y fusión de los dos agentes
+- python3 -m py_compile app/*.py: OK. node --check web/app.js y
+  web/social.js: OK.
+- app/config.py: VERSION = "3.1.3".
+- Los dos agentes editaron el mismo repo sin conflictos: render
+  (media.py, tracking.py, pipeline.py, server.py 1 línea, web/app.js
+  3 selects + hint) y social (social.py nuevo, db.py, server.py
+  rutas + scheduler, web/social.js nuevo, web/app.js 2 líneas,
+  web/index.html 1 script). La fusión se comprobó: la entrada de
+  Cuentas está en el menú (NAV) y en PAGES, /social.js se sirve, y
+  los tres selects de formato incluyen "speaker" y "camara".
+- El hint de cam_corner en Ajustes (web/app.js línea 489) ya trae el
+  texto nuevo ("se recorta su caja exacta (sin gameplay dentro)").
+
+2. Punto 1 — Cámara de reacción ancha arriba (Dúo, 1 cara)
+- Cambio (app/media.py, app/pipeline.py, app/tracking.py): el panel
+  superior del Dúo ya no es un recorte apretado de la cara: es la
+  caja exacta de la cámara (ver punto 5) a todo el ancho, 1080x640,
+  con el video completo abajo, 1080x1280. Si no hay caja exacta, un
+  recorte ancho alrededor de la cara (~5.5x el ancho del rostro).
+  Además se corrigió un bug: el Dúo renderizaba la rama de 2 caras
+  en un video de 1 persona (segunda detección Haar duplicada dentro
+  de la misma cámara); ahora se descarta un rostro válido si su
+  centro mediano está a <0.25 de otro ya aceptado Y su área es <0.5x
+  la de ese rostro. Las ramas de 2/3/4 caras no se tocaron.
+- Render directo a2_duo_bugatti.mp4 (Bugatti s0600 5–25 s):
+  1080x1920, 20,0 s, con audio, nota=''. Cuadros revisados a mano:
+  t=10 el panel superior es toda la cámara a lo ancho (rdjavi, silla
+  amarilla, cuarto rosa, micrófono, monitor), sin gameplay; abajo el
+  juego grande (puente, árboles, carro azul). Comparado píxel a píxel
+  con la caja fuente con la misma cadena de filtros: diferencia media
+  absoluta 1,2 a t=7 — el render es exactamente la caja fuente.
+- Prueba de filtro t1_duo_wide.mp4 (5,0 s, 1080x1920, solo video,
+  revisada a mano por el coordinador): t=1 el panel superior es la
+  cámara completa a lo ancho y abajo el juego, subtítulo quemado
+  visible («que no podemos hacer un…»), SIN marca de agua. t=3,5 el
+  panel superior muestra gameplay (árboles/cielo): en ese instante el
+  video original mismo NO trae la cámara (ver límite abajo).
+- Puerta de presencia (app/pipeline.py _gate_duo_picks, medida en
+  test_gate.py): s0600 30–60 s (cámara ausente al final, verificado
+  en el cuadro fuente t=55) → ok=False; 0–30 s, 5–25 s, s1200 0–30 s
+  → ok=True. Con picks [(30,60),(0,30)] devolvió [(0,30),(5,25)] y
+  dejó en el log "Dúo: descartado el tramo 30-60s (la cámara no está
+  presente en todo el tramo)".
+- LÍMITES HONESTOS: (a) La caja es casi cuadrada (142x140) y el
+  panel es 1080x640, así que el relleno muestra el ~59% central de
+  la altura de la caja, sin distorsión ni gameplay dentro. Cuando
+  rdjavi se acerca a la cámara su cara llena el panel; eso es el
+  contenido fuente, no un error de render. (b) La puerta detecta
+  ausencias de ~un tercio del tramo, NO de 2–3 s: la ventana 5–25 s
+  pasa con tercios [0.15, 0.77, 0.5] y aun así la cámara falta los
+  últimos ~3 s (t=18 del clip muestra cielo arriba). Subir el umbral
+  a 0.30 también rechazaría ventanas buenas (s2000 primer tercio
+  0.30), así que se dejó en 0.15. (c) Los renders de Dúo/gaming
+  ahora tardan ~100 s por un clip de 20 s en esta VM (antes ~50 s)
+  porque detect_cam_box añade un pase de Haar.
+
+3. Punto 2 — Cámara que cambia a quien habla (nuevo formato
+   "speaker")
+- Cambio (app/tracking.py speaker_segments, app/media.py rama
+  "speaker" con recorte por pasos, app/pipeline.py produce_clip,
+  app/server.py allowlist, web/app.js 3 selects): se agrupan las
+  palabras de Whisper en turnos (hueco >0,7 s); en cada turno se
+  mide el movimiento de la boca (diferencia de cuadros en la mitad
+  inferior de cada caja de rostro, proxy 5 fps) y se atribuye el
+  turno al rostro con más movimiento; el encuadre corta a esa
+  persona a pantalla completa (1080x1920). Esto es una APROXIMACIÓN,
+  NO diarización real (no hay modelo de quién habla en CPU).
+- Render directo b_speaker_eldotol.mp4 (El Dotol 0–35 s, palabras
+  reales de Whisper): 1080x1920, 35,0 s, con audio, nota=''.
+  Cuadros revisados a mano 4/4 correctos: t=0,5 Andrea, t=1,5 Boica,
+  t=15 Andrea, t=30,2 Boica — la persona correcta a pantalla
+  completa y centrada en cada frontera revisada.
+- Prueba de filtro t3_speaker_step.mp4 (10,0 s, 1080x1920, solo
+  video, revisada a mano por el coordinador): t=2 Boica a pantalla
+  completa y centrado; t=7 Andrea a pantalla completa y centrada —
+  el cambio de encuadre funciona en los dos instantes revisados.
+  (El subtítulo visible en estos cuadros es el del clip del amigo,
+  ya quemado en el archivo fuente, no el nuestro.)
+- Precisión, honesta: ~50% en 9 segmentos revisados a mano
+  (4,5–5/9); turnos de Boica encontrados 2 de 7. Fallos: turnos de
+  <1 s se fusionan; Boica en 39,4–40,6 s y 46,2–47,2 s tiene solo 1
+  detección Haar cada uno (indetectable); 32,0–33,8 s parpadea entre
+  Andrea y Boica. DESVIACIÓN DEL ENCARGO, DOCUMENTADA: el segmento
+  mínimo es 0,8 s, no 1,5 s — con 1,5 s TODOS los turnos de Boica
+  (0,6–1,4 s) se fusionan y no hay ningún cambio de cámara en el
+  clip de El Dotol; con 1,0 s el plano inicial de Andrea se fusiona
+  con Boica. Queda en 0,8 s.
+- Con menos de 2 rostros cae al vertical con aviso ⚠ (verificado
+  en la pelota, punto 6).
+
+4. Punto 4 — Formato de cámara completa (nuevo formato "camara")
+- Cambio (app/media.py rama "camara" + _valid_camara_faces,
+  app/server.py allowlist, web/app.js 3 selects): recorte centrado
+  en el rostro seguido, ventana 9:16 de ~3,5x el ancho del rostro,
+  a 1080x1920. Sin rostro válido cae al vertical con aviso ⚠.
+- Render directo c_camara_eldotol.mp4 (El Dotol 5–15 s): 1080x1920,
+  10,0 s, con audio, nota=''; cuadro a t=2: Andrea centrada a
+  pantalla completa, cara y hombros.
+- Prueba de filtro t4_camara.mp4 (5,0 s, 1080x1920, solo video,
+  revisada a mano por el coordinador): t=1 y t=3,5 Andrea a pantalla
+  completa y centrada, sin duplicación, sin marca de agua.
+  (El subtítulo «¡Demasiado hermosa,» es el del clip del amigo, ya
+  quemado en el archivo fuente.)
+- LÍMITE HONESTO: en una cámara de ESQUINA (Bugatti,
+  g_camara_bugatti.mp4) la ventana se topa con la esquina del
+  frame y se ve la caja de la cámara + gameplay alrededor, no a la
+  persona llenando la pantalla; además la cara de ~40 px ampliada
+  ~5,7x se ve suave/borrosa. El formato, como se pidió, asume un
+  plano centrado de la persona hablando (El Dotol).
+
+5. Punto 5 — Recorte perfecto de la cámara para gaming (GTA VI)
+- Cambio (app/tracking.py detect_cam_box, app/media.py rama
+  "gaming", web/app.js hint): la IA detecta la caja EXACTA de la
+  cámara (bordes por Canny + agregación por histograma sobre los
+  cuadros; el centro de la cara ahora es la mediana de las
+  detecciones Haar crudas en la esquina, no el track suavizado) y
+  la recorta limpia; el juego llena la pantalla y la caja va arriba
+  encajada dentro de 480x270 en (24,24) con el borde azul #2f7bff
+  de 5 px. No se añade un segundo rótulo "RD JAVI": el del video
+  fuente ya está dentro de la caja. Sin caja exacta, cae al
+  comportamiento anterior (cara seguida si detected>=0.5, si no
+  esquina fija).
+- Caja medida contra la caja visible (~0.005, 0.01, 0.22, 0.39):
+  s0600 0–30 s → (0.005, 0.008, 0.221, 0.394), hit 0.73;
+  5–35 s → (0.005, 0.008, 0.221, 0.394); 5–25 s → (0.005, 0.008,
+  0.222, 0.393), hit 0.62; 30–60 s → (0.005, 0.008, 0.178, 0.317)
+  (más angosta — la cámara puede ser más chica en ese tramo);
+  s1200 0–30 s → (0.005, 0.019, 0.234, 0.386); s2000 0–30 s →
+  (0.005, 0.008, 0.220, 0.389), hit 0.80. Todas dentro de ~6% de
+  la caja visible. El prototipo de Canny acumulado se probó y se
+  descartó (el micrófono paraba el escaneo: anchos 83–114 px).
+- Render directo d2_gaming_bugatti.mp4 (s0600 5–25 s): 1080x1920,
+  20,0 s, con audio, nota=''. Caja revisada a t=2 y t=10: contiene
+  SOLO la cámara (rdjavi, cuarto rosa, micrófono, silla amarilla),
+  borde azul, sin gameplay dentro. El render viejo (antes del
+  arreglo) mostraba árboles/cielo en ~30% derecho de la caja a
+  t=10 — ese fallo está corregido.
+- Prueba de filtro t2_gaming_box.mp4 (5,0 s, 1080x1920, solo video,
+  revisada a mano por el coordinador): t=1 la caja contiene SOLO
+  la cámara con borde azul, juego a pantalla completa, subtítulo
+  quemado visible, sin marca de agua. t=3,5 la caja muestra
+  árboles/cielo: el video fuente mismo NO trae la cámara en ese
+  instante y el gaming NO tiene puerta de presencia (ver límite).
+- DESVIACIÓN, PLANA: la caja se encaja DENTRO de 480x270
+  conservando el aspecto (~254x270), no se fuerza a 480x270 — la
+  caja es casi cuadrada y forzarla estiraría la cara ~1,9x en
+  horizontal.
+- LÍMITE: si el video fuente no trae la cámara en un instante, la
+  caja muestra gameplay (no hay cámara que recortar ahí).
+
+6. Fallbacks sin rostro (pelota roja, video sin rostros)
+- Duo 0–20 s, camara 0–20 s y 10–40 s (f_camara_pelota_long.mp4,
+  30,0 s, 1080x1920), speaker 0–20 s: todos caen al vertical con
+  el aviso ⚠ y SIN duplicación (cuadros revisados para duo/camara;
+  nota verificada para speaker). El falso positivo del círculo "1"
+  de la pelota (det 0,51) lo rechaza la puerta cy<0,6, no el área
+  (una puerta por área también rechazaría cámaras reales).
+
+7. Punto 3 — Apartado de Cuentas (TikTok, Facebook, Instagram,
+   YouTube)
+- Cambio (app/social.py nuevo ~370 líneas, app/db.py tablas
+  social_accounts y social_posts, app/server.py rutas + scheduler,
+  web/social.js nuevo, web/app.js 2 líneas, web/index.html 1
+  script): página Cuentas — conectar cada red con su login OAuth,
+  subir el clip desde la página sin salir de ella, programar fecha
+  y hora, título y hashtags, estado por red (publicado con enlace /
+  programado / fallido con motivo). Sin reintentos automáticos.
+- Por red (REAL contra GUIADO): YouTube REAL (OAuth offline +
+  refresh, subida reanudable, programación nativa con publishAt);
+  Facebook REAL (OAuth, token largo, lista de Páginas, subida de
+  Reel a la Página, scheduled_publish_time nativo); Instagram REAL
+  (OAuth Meta, contenedor + publicación por Graph API) con dos
+  límites: el video necesita una URL PÚBLICA (sin
+  social_public_base_url con TBX_PUBLIC=1 la publicación falla con
+  mensaje claro) y NO hay programación nativa — el scheduler de la
+  app publica a la hora mientras el servidor corre; TikTok REAL
+  (OAuth + Content Posting API con subida directa) cuando existen
+  credenciales, si no flujo GUIADO exacto + atajo «Abrir en TikTok
+  Studio» marcado como atajo, no como conexión; nunca se muestra
+  "conectado" sin un intercambio real de token. Las credenciales de
+  desarrollador van en la propia página Cuentas (sección solo
+  admin), no en Ajustes. Los tokens se guardan por usuario en la
+  base local (mismo nivel que los ajustes) y NUNCA se devuelven por
+  la API ni se registran en logs.
+- Verificación (servidor aislado, puerto 8767, TBX_SOCIAL_MOCK=1,
+  datos en ~/workspace/.v313-social-test-data/): sin sesión → 401
+  en /api/social/accounts; lista vacía al inicio; sin credenciales
+  → needs_credentials: true, auth_url: null, guía con el redirect
+  URI exacto; con credenciales falsas de Google → URL real de
+  Google con scope youtube.upload y access_type=offline; callback
+  con state malo → 302 a /#/cuentas?error=…; publicación inmediata
+  (mock, clip real de 36 s) YouTube + Facebook → published con IDs
+  externos; programado a 70 s → el scheduler lo tomó a ~t+100 s →
+  scheduled con ID de YouTube (programación nativa, correcto);
+  cancelar un programado lejano OK; cancelar un publicado se
+  rechaza bien; segundo usuario ve [] cuentas y 403 al leer lo del
+  admin; log del servidor sin errores ni tracebacks.
+- NO PROBADO (plano): OAuth y subida en vivo contra cuentas reales
+  de YouTube/Facebook/Instagram/TikTok (no existen credenciales del
+  usuario aquí); publicación de Instagram (necesita URL pública +
+  cuenta IG Business real); subida de TikTok (necesita app de
+  desarrollador aprobada); multi-publicación de 3+ cuentas (solo se
+  probaron 2 en mock); la página Cuentas renderizada en un navegador
+  real (solo sintaxis JS comprobada, social.js sirve 200).
+
+8. NO VERIFICADO en esta entrega (plano, por el cierre rápido)
+- Los trabajos de punta a punta por la API del pipeline para la
+  3.1.3 NO se completaron: el agente verificador se detuvo antes de
+  terminar sus trabajos de API (el usuario notó ~2 h de build y se
+  ordenó cerrar con los renders ya existentes). Lo verificado son
+  los renders directos de render_clip (a2/b/c/d2 con audio y cuadros
+  revisados a mano) y las pruebas de filtro t1–t4 (revisadas a mano
+  por el coordinador), más la suite de endpoints sociales. La ruta
+  que usa la API (produce_clip → render_clip) es la misma probada
+  aquí, y los formatos aparecen en los selects de la UI
+  (comprobado), pero el cableado del pipeline (puerta de candidatos
+  en run_video, cómputo de segmentos de hablante en produce_clip)
+  NO se probó de punta a punta por la API en esta entrega.
+- Dúo de 3+ personas: sin cambios desde la 3.1.2 (solo render
+  directo del grafo, nunca por API). Gaming por API tampoco se
+  re-verificó en esta entrega (solo render directo).
+- Las ramas no tocadas siguen con la verificación de la 3.1.2:
+  Dúo con cara en Bugatti (2 clips 36,0 s y 32,5 s), Dúo sin cara
+  en pelota roja (39,9 s, vertical con aviso), Dúo 2 personas
+  (31,1 s y 22,6 s, dos bandas 1080x960).
+
+9. Qué NO lleva esta versión (el usuario lo rechazó, "no")
+- Subtítulos karaoke, tarjeta de gancho al inicio del clip,
+  zoom (punch-in) en la frase clave. Nada de eso está en el código.

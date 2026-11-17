@@ -1,0 +1,24 @@
+# Despliegue en Render (plan gratis) — https://render.com
+# 1. Sube esta carpeta a un repo de GitHub (privado o público).
+# 2. En Render: New + > Web Service > conecta el repo > Docker.
+# 3. Plan: Free. Render te da un link tipo https://advvxclips.onrender.com
+#    (ese es el link que les mandas a tus amigos).
+# 4. Variables de entorno (Render las pone en Environment):
+#      TBX_PUBLIC=1
+#    (el puerto lo pone Render solo con la variable PORT).
+# 5. La primera cuenta que se cree en ese link es la tuya (admin).
+#    Tus amigos se crean su cuenta y tú los apruebas en Usuarios.
+#
+# OJO, plan gratis: se duerme a los 15 min sin uso (el primer que entre
+# espera 1-2 min a que despierte), solo tiene 512 MB de RAM y el disco
+# es temporal: si se reinicia, los clips y las cuentas se borran.
+services:
+  - type: web
+    name: advvxclips
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: TBX_PUBLIC
+        value: "1"

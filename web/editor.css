@@ -1,0 +1,74 @@
+/* ===== Biblioteca por creadores ===== */
+.lib{display:grid;grid-template-columns:250px minmax(0,1fr);gap:20px;align-items:start}
+.crs{position:sticky;top:12px;max-height:calc(100vh - 40px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:10px}
+.crs h3{margin:4px 8px 8px;font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.6px}
+.cr{display:flex;gap:10px;align-items:center;padding:8px;border-radius:12px;cursor:pointer;border:1px solid transparent}
+.cr:hover{background:var(--panel2)}.cr.on{background:linear-gradient(90deg,#7c5cff33,#22d3ee1a);border-color:#7c5cff88}
+.cr .av{width:42px;height:42px;border-radius:50%;background:var(--panel2) center/cover;flex:none;display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--mut)}
+.cr .nm{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr .ct{font-size:12px;color:var(--mut)}
+.crhead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.badge{position:absolute;top:8px;right:8px;background:#000b;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:700}
+.badge.ed{background:#7c5cffcc}
+.clip{position:relative}.clip.picked{outline:3px solid var(--acc2);outline-offset:-3px}
+.pickbox{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:7px;border:2px solid #fff9;background:#0008;display:flex;align-items:center;justify-content:center;font-weight:900;z-index:2}
+.picked .pickbox{background:var(--acc2);border-color:var(--acc2);color:#04222a}
+.selbar{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:#1d2333;border:1px solid var(--acc);border-radius:16px;padding:10px 16px;display:flex;gap:10px;align-items:center;z-index:40;box-shadow:0 10px 40px #000a;flex-wrap:wrap}
+@media(max-width:900px){.lib{grid-template-columns:1fr}.crs{position:static;max-height:none;display:flex;gap:6px;overflow:auto}.crs h3{display:none}.cr{flex:none}}
+
+/* ===== Editor ===== */
+.main.wide{max-width:none;padding:12px 16px}
+.ed{display:flex;flex-direction:column;height:calc(100vh - 24px);min-height:640px;gap:10px}
+.ed-top{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ed-name{max-width:280px;font-weight:700}.ed-st{font-size:12px;color:var(--mut)}
+.ed-mid{flex:1;min-height:0;display:flex;gap:12px}
+.ed-left{width:390px;flex:none;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);min-height:0}
+.ed-tabs{display:flex;flex-wrap:wrap;gap:4px;padding:8px;border-bottom:1px solid var(--line)}
+.ed-tabs button{background:none;border:0;color:var(--mut);padding:7px 10px;border-radius:9px;font-weight:700;cursor:pointer;font-size:12.5px}
+.ed-tabs button.on{background:var(--acc);color:#fff}
+.ed-panel{flex:1;overflow:auto;padding:12px}
+.ed-center{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.ed-stagebox{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:#05070a;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.ed-stage{position:relative;overflow:hidden;background:#000;box-shadow:0 0 0 1px #ffffff22,0 12px 50px #000c;border-radius:4px}
+.ed-bg{position:absolute;inset:0;width:100%;height:100%;filter:blur(8px) brightness(.85);transform:scale(1.25)}
+.ed-vwrap{position:absolute;inset:0}.ed-video{position:absolute;background:#000;object-fit:fill}
+.ed-ovl,.ed-sub,.ed-pick{position:absolute;inset:0}.ed-sub{pointer-events:none}.ed-ovl{pointer-events:none}
+.ed-ov{position:absolute;transform:translate(-50%,-50%);cursor:move;user-select:none;pointer-events:auto;touch-action:none}
+.ed-ov.sel{outline:2px dashed var(--acc2);outline-offset:3px}
+.ed-text{white-space:pre;font-family:Poppins,sans-serif;font-weight:700;line-height:1.2;border-radius:6px}
+.ed-subwrap{position:absolute;left:0;right:0;text-align:center}
+.ed-line .w{display:inline-block;transform-origin:50% 70%}
+.ed-line.anim-slide{animation:subSlide .17s ease-out}.ed-line.anim-fade{animation:subFade .16s}.ed-line.anim-zoom{animation:subZoom .13s ease-out}
+@keyframes subSlide{from{transform:translateY(70px);opacity:0}to{transform:none;opacity:1}}
+@keyframes subFade{from{opacity:0}to{opacity:1}}@keyframes subZoom{from{transform:scale(.7)}to{transform:none}}
+.w.act.wanim-pop{animation:wPop .09s forwards}.w.act.wanim-bounce{animation:wBounce .22s forwards}
+@keyframes wPop{from{transform:scale(calc(var(--pop,1.18) - .22))}to{transform:scale(var(--pop,1.18))}}
+@keyframes wBounce{0%{transform:scale(.6)}50%{transform:scale(1.35)}100%{transform:scale(1)}}
+.ed-pick{cursor:crosshair;touch-action:none}.ed-rect{position:absolute;border:2px solid var(--acc2);background:#22d3ee33;pointer-events:none}
+.ed-banner{align-items:center;gap:10px;background:#1b2236;border:1px solid #2c3a63;border-radius:10px;padding:8px 12px;font-size:13px;flex-wrap:wrap}
+.spin{width:14px;height:14px;border:2px solid #fff4;border-top-color:var(--acc2);border-radius:50%;display:inline-block;animation:sp .8s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+.ed-transport{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px}
+.ed-time{font:700 15px ui-monospace,Consolas,monospace;min-width:54px}
+.ed-tl{height:270px;flex:none;display:flex;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow-y:auto;overflow-x:hidden}
+.tl-labels{width:96px;flex:none;position:relative;background:#0e1118;border-right:1px solid var(--line);z-index:6}
+.tl-lab{position:absolute;left:8px;right:4px;font-size:11px;color:var(--mut);display:flex;align-items:center}
+.tl-scroll{flex:1;overflow-x:auto;overflow-y:hidden;position:relative}
+.tl-inner{position:relative;min-width:100%}
+.tl-ruler{position:absolute;top:0;left:0;right:0;height:26px;border-bottom:1px solid var(--line);cursor:pointer;background:#0e1118}
+.tl-ruler .tick{position:absolute;top:0;bottom:0;border-left:1px solid #fff3;font-size:10px;color:var(--mut);padding-left:3px}
+.tl-b{position:absolute;border-radius:8px;border:1px solid #fff4;overflow:hidden;cursor:grab;font-size:11px;display:flex;align-items:center;padding:0 10px;min-width:6px;white-space:nowrap;user-select:none;touch-action:none}
+.tl-b .lbl{overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+.tl-b.seg{background:linear-gradient(180deg,#3b4cca,#2b3699);font-weight:700;font-size:12px}.tl-b.sub{background:#1f6f53}.tl-b.mus{background:#8a4b00}.tl-b.ovl{background:#7a2f6e}
+.tl-b.zm{background:#0b6b7a}.tl-b.zm.face{background:#6b5a0b}.tl-b.zm.track{background:#7a3a0b}
+.tl-b.sel{outline:2px solid #fff;z-index:3}.tl-b.dragging{opacity:.55}
+.tl-b .hl,.tl-b .hr{position:absolute;top:0;bottom:0;width:9px;cursor:ew-resize;background:#ffffff40}.tl-b .hl{left:0}.tl-b .hr{right:0}
+.tl-ph{position:absolute;top:0;bottom:0;width:2px;background:#ff4d6d;z-index:5;pointer-events:none}
+.tl-ph i{position:absolute;top:0;left:-6px;width:14px;height:12px;background:#ff4d6d;clip-path:polygon(0 0,100% 0,50% 100%)}
+/* paneles */
+.pn .fld{margin-top:10px}.pn .fld label{margin:0 0 4px}.pn-t{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--mut);margin:18px 0 6px}
+.pn .li{display:flex;gap:8px;align-items:center;padding:7px 8px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px;cursor:pointer;background:var(--panel2)}
+.pn .li.sel{border-color:var(--acc2);background:#22d3ee14}.pn .li .t{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}.pn .li .n{min-width:20px;text-align:center;color:var(--mut)}
+.pn input[type=range]{width:100%;accent-color:var(--acc)}.pn input[type=color]{width:60px;height:34px;padding:2px}
+.pn .theme{font-size:13px}
+.chunks .chunk{margin-bottom:5px}.chunks .chunk.sel input{border-color:var(--acc2)}.chunk small{width:40px;cursor:pointer}
+.wtimes{background:#0e1118;border-radius:10px;padding:6px;margin:0 0 8px 44px}.wt{display:flex;gap:6px;align-items:center;margin:3px 0}.wt span{flex:1;font-size:12px}.wt input{width:78px;padding:5px 7px}
+@media(max-width:1100px){.ed-left{width:320px}}

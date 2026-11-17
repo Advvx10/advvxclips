@@ -1,0 +1,392 @@
+AdvvxClips — CAMBIOS v3.1.4 (2026-11-17)
+==========================================
+
+v3.1.4 — los 5 puntos confirmados por el usuario («Sí, así mismo»,
+2026-11-17), para el lanzamiento de GTA VI. NO incluye el formato
+Discord (propuesta sin confirmar) ni karaoke, ni tarjeta de gancho,
+ni punch-in zoom (el usuario dijo no a los tres).
+
+1. Entrevista mejorado — pantalla dividida cuando dos hablan a la vez
+   (app/tracking.py, app/media.py): speaker_segments ahora marca con
+   una tupla (i, j) los tramos donde DOS personas hablan a la vez
+   (la segunda con >= 0.5x la energía de boca de la primera y ambas
+   >= 1.5, el suelo de ruido; solo con energía de boca real, no con
+   la reserva por presencia). En media.py, si algún segmento es
+   dividido, el grafo usa split=4: plano solo a pantalla completa
+   cuando habla uno, y dos bandas de 1080x960 (uno arriba, uno abajo)
+   cuando hablan los dos, con overlays encendidos/apagados por
+   expresiones enable por tramos; al terminar el cruce vuelve al
+   plano solo. Si no hay ningún tramo dividido, el camino anterior
+   (un solo recorte) queda EXACTAMENTE igual. Límite honesto: la
+   atribución de hablante es una aproximación por movimiento de boca
+   + palabras de Whisper (~50% de acierto medido) y la detección de
+   cruce puede dispararse con risas o con dos bocas moviéndose a la
+   vez sin hablar; los turnos de menos de 1 s se funden (mínimo
+   0,8 s). Con menos de 2 personas sigue cayendo al vertical con aviso.
+2. «De qué trata el video» (app/config.py, app/pipeline.py,
+   app/highlight.py, app/ai.py, app/live.py, app/server.py,
+   web/app.js): desplegable nuevo en Crear clips > Opciones del
+   proyecto (junto a Formato) y en Ajustes > Clips (valor por
+   defecto). Opciones: Entrevista, Podcast, Resumen, Película,
+   Gaming; valores guardados: entrevista, podcast, resumen,
+   pelicula, gaming; el valor por defecto en config sigue siendo
+   "general" y NO es una opción del desplegable (si no se elige
+   nada, el proyecto usa "general"). Se guarda con el proyecto y
+   afecta la selección: entrevista/podcast premian discusión, cruce
+   de voces e intercambio rápido (+8 en Pelea/Discusión); resumen
+   premia ventanas narrativas largas; gaming premia energía alta;
+   película no cambia nada. En la IA, el tipo se traduce
+   (entrevista/podcast→interview, resumen→narration,
+   pelicula/gaming→general) y se pasa como contexto del prompt.
+   El tipo NO fuerza el formato: el usuario lo elige por separado.
+   Valores desconocidos se rechazan con 400 al crear el proyecto y
+   en Ajustes.
+3. Calidad al máximo (app/config.py): la descarga por defecto pasa
+   de 720p a 1080p (max_height 720 → 1080). El perfil Alta sigue
+   siendo 60 fps y CRF 18. Compromiso: los videos en 1080p pesan
+   más y la descarga y la transcripción tardan más, pero el usuario
+   quiere la máxima calidad para el boom de GTA VI.
+4. Cámara completa: SIN cambio de código. El formato «camara» ya
+   existía desde 3.1.3 y está en los desplegables; la verificación
+   de esta versión lo prueba de punta a punta.
+5. Marca de agua en Opciones del proyecto (app/config.py,
+   app/pipeline.py, app/media.py, app/server.py, web/app.js): en
+   Crear clips hay una sección «Marca de agua» con modo (Sin marca
+   / Imagen / Texto), texto y un deslizador de opacidad 0-100%;
+   esos campos viajan con el proyecto. En Ajustes se puede subir
+   una imagen personalizada (PNG/JPG, máx. 5 MB, solo el
+   administrador) que se guarda en DATA_DIR/watermark.png y se usa
+   en vez del logo por defecto; GET /api/settings/watermark dice si
+   hay una imagen personalizada. La opacidad se aplica al logo con
+   colorchannelmixer (aa) y al texto con alpha en drawtext; por
+   defecto sigue APAGADA (watermark_mode "none", como la dejó el
+   usuario en 3.1.2). La re-renderización desde Biblioteca respeta
+   la marca de agua DEL PROYECTO, no solo la global.
+
+AdvvxClips — CAMBIOS v3.1.3 (2026-11-14)
+==========================================
+
+v3.1.3 — "la cámara ancha arriba, la cámara al que habla, cuentas
+para subir sin salir, cámara completa y recorte perfecto": los 5
+puntos que el usuario confirmó («dale ya») después de probar la
+3.1.2 con su proyecto del Bugatti, donde el clip salió un poco mejor
+pero la cámara seguía chiquita en una esquina y se perdía a los
+~8-13 s, y después de comparar con la página de su amigo, que tarda
+más de 1 hora transcribiendo un video de 50 minutos pero cuyos clips
+cambian la cámara a quien habla.
+
+1. Cámara de reacción ancha arriba (app/media.py, app/pipeline.py,
+   app/tracking.py): el panel superior del Dúo ya no es un recorte
+   apretado de la cara: es la caja exacta de la cámara a todo el
+   ancho (1080x640), con el video grande abajo (1080x1280). Si no
+   hay caja exacta, un recorte ancho (~5.5x el ancho del rostro).
+   Además el pipeline ahora descarta los tramos donde la cámara no
+   está presente en todo el tramo (puerta por tercios): un tramo
+   30-60 s del Bugatti donde la cámara se va al final se descarta y
+   se toma el siguiente mejor. Límite: la puerta detecta ausencias
+   de ~un tercio del tramo, no de 2-3 s; con umbral 0.15 un tramo
+   5-25 s pasa aunque la cámara falte los últimos ~3 s. Y la caja es
+   casi cuadrada, así que el panel muestra el ~59% central de su
+   altura, sin distorsión. También se corrigió un bug: el Dúo
+   renderizaba la rama de 2 caras en un video de 1 persona (segunda
+   detección Haar duplicada dentro de la misma cámara).
+2. Cámara que cambia a quien habla (app/tracking.py,
+   app/media.py, app/pipeline.py; nuevo formato "speaker"): para
+   entrevistas y podcasts, el encuadre corta a pantalla completa a
+   la persona que está hablando, como en el clip del amigo (El Dotol
+   Nastra, FORTACHON vs GORDITA). Es una aproximación por movimiento
+   de boca + palabras de Whisper, NO diarización real: en el clip de
+   prueba acierta ~50% de los turnos. El segmento mínimo es 0,8 s
+   (no 1,5 s): con 1,5 s no hay ningún cambio de cámara en ese clip.
+   Con menos de 2 rostros cae al vertical con aviso.
+3. Apartado de Cuentas (app/social.py nuevo, app/db.py,
+   app/server.py, web/social.js nuevo): página nueva en el menú
+   para conectar TikTok, Facebook, Instagram y YouTube con su login
+   OAuth, subir el clip desde la página sin salir de ella, programar
+   fecha y hora, y poner título y hashtags, con estado por red.
+   YouTube y Facebook usan programación nativa; Instagram se publica
+   con el scheduler de la app (la API de Instagram no programa) y
+   necesita que el video esté en una URL pública; TikTok sube directo
+   por API cuando hay credenciales aprobadas, si no muestra el flujo
+   guiado exacto + atajo a TikTok Studio (marcado como atajo, nunca
+   como conectado sin token real). Cada red necesita sus propias
+   credenciales de desarrollador (los pasos exactos están en la
+   página); sin cuentas reales no se pudo probar la subida en vivo.
+   Los tokens se guardan por usuario en la base local y nunca se
+   muestran ni se registran.
+4. Formato de cámara completa (app/media.py; nuevo formato
+   "camara"): la cámara de la persona llena toda la pantalla
+   vertical 9:16, cara centrada y seguida, sin juego ni segundo
+   video abajo. Sin rostro válido cae al vertical con aviso.
+   Límite: en una cámara de esquina (como la del Bugatti) la ventana
+   se topa con la esquina y se ve la caja + gameplay alrededor; el
+   formato asume un plano centrado de la persona hablando.
+5. Recorte perfecto de la cámara para gaming (app/tracking.py,
+   app/media.py): la IA detecta la caja EXACTA de la cámara (bordes
+   + histograma) y la recorta limpia — ya no se cuela gameplay
+   dentro de la caja como pasaba con el recorte de esquina fija. El
+   juego llena la pantalla y la caja va arriba dentro de 480x270 con
+   borde azul. La caja medida está dentro de ~6% de la visible en 6
+   ventanas del Bugatti. Límite: si el video fuente no trae la
+   cámara en un instante, la caja muestra gameplay (no hay cámara
+   que recortar ahí). La caja se encaja conservando el aspecto, no
+   se estira.
+
+NO LLEVA (el usuario dijo "no"): subtítulos karaoke, tarjeta de
+gancho al inicio, zoom en la frase clave.
+
+Los proyectos creados en la 3.1.2 SIGUEN SIRVIENDO en la 3.1.3: no
+hay que recrear nada para los formatos viejos. Los formatos nuevos
+aparecen en Crear clips > Formato y en Ajustes > Formato. Los
+renders de Dúo/gaming tardan más que antes (~100 s por un clip de
+20 s en una PC lenta) porque detectar la caja exacta añade un pase
+de análisis.
+
+AdvvxClips — CAMBIOS v3.1.2 (2026-11-12)
+==========================================
+
+v3.1.2 — "el Dúo no duplica, la cámara chiquita sí se ve, títulos de
+qué trata el clip, sin marca de agua": los 7 puntos que el usuario
+confirmó («ya, puedes actualizarlo») después de probar la 3.1.1 con
+su proyecto del Bugatti, donde el clip salió con el carro duplicado
+arriba y abajo, subtítulos mal transcritos y título de plantilla.
+
+1. Dúo sin cara NO duplica (app/media.py, app/tracking.py):
+   La puerta del Dúo ahora es SOLO por esquina: se acepta un rostro
+   solo si es una cámara de esquina persistente y estable (flag
+   `corner` de track_faces: esquina superior + detected >= 0.15 +
+   estabilidad >= 0.60, antes 0.70). Se quitó la rama incondicional
+   detected >= 0.5: medido que aceptaba el falso positivo del
+   círculo "1" de la pelota roja en ventanas de largo real (det 0.61
+   en 13.9-41.9s, 0.76 en 20-40s). Con solo-esquina, la cámara de
+   rdjavi se acepta en 9/9 ventanas del Bugatti y los dos hombres
+   del video de reacción jobs/1 en 5-33s, y todos los falsos
+   positivos de la pelota se rechazan (cy 0.81-0.84, nunca esquina
+   superior). Sin rostro válido, el Dúo cae al formato vertical
+   (fill) y el trabajo avisa: "⚠ Sin rostro detectado en este clip:
+   se usó el formato vertical en vez del Dúo para no duplicar el
+   video." El clip nunca sale con el mismo contenido arriba y abajo.
+2. Detección de cámaras chiquitas en la esquina (app/tracking.py):
+   el proxy de seguimiento ya estaba en 640 px (v3.1.1, medido: la
+   cara de rdjavi ~40 px en 640x360 solo se veía en 2-5% de los
+   frames a 320 px, y en 37-42% a 640 px). Ahora la estabilidad
+   mínima de esquina es 0.60 (antes 0.70): la cámara del Bugatti en
+   5-33s tiene estabilidad 0.630 y antes se rechazaba. Los
+   personajes del juego (momía, faraón) siguen sin pasar: no están
+   en esquina y no son estables.
+3. Subtítulos en español fijo (app/config.py, app/transcribe.py):
+   idioma por defecto "es" (antes "auto"). Whisper tiny (perfil
+   Rápida) detectaba italiano en directos en español y
+   transcribía mal ("¡Se vean que", "llueve haciendo", "Driz!").
+   El idioma sigue siendo cambiable en Ajustes.
+4. Títulos que dicen de qué trata el clip (app/ai.py, app/highlight.py):
+   - El modelo por defecto de la API ya era openai/gpt-oss-20b
+     (Groq retiró llama-3.3-70b-versatile para cuentas gratis: 404).
+   - El prompt de la IA ya pedía títulos del tema con palabras
+     reales dichas y prohibía etiquetas de momento ("Se pelean en
+     pleno directo", "Discusión fuerte en el directo").
+   - NUEVO: el título integrado (sin IA) NUNCA usa las plantillas
+     de momento (MOMENT_TITLES) como título: si el fragmento no
+     tiene frase con contenido, el título es el neutro "Clip
+     destacado". El `moment` del clip sigue guardándose aparte
+     como etiqueta del tipo de momento en la tarjeta.
+   - Cuando no hay IA configurada, el mensaje del trabajo avisa
+     visiblemente: "motor integrado (sin IA: los títulos son
+     plantillas, no palabras del clip — pon tu clave gratis de
+     Groq en Ajustes > IA para títulos reales)". Los títulos
+     reales con palabras del clip necesitan esa clave gratis de
+     Groq en Ajustes > IA (la app sola no la puede poner).
+5. Marca de agua APAGADA por defecto (app/config.py):
+   watermark_mode "none": los clips salen SIN el logo quemado.
+   La opción sigue en Ajustes (logo o texto) por si la quieres.
+6. Formato multi-persona (app/media.py): el Dúo ahora se divide
+   por número de rostros válidos — 2 personas = mitad y mitad
+   (1080x960 cada una, una cara por banda), 3 = tres bandas de
+   1080x640, 4 = cuatro de 1080x480, cada una siguiendo su cara.
+7. Formato reacción/gaming (app/media.py): con 1 rostro, Reacción
+   — cámara con la cara arriba (1080x640, seguida) y el video
+   completo abajo (1080x1280). Sin rostro, vertical con aviso.
+
+Límites honestos (ver VERIFICADO.txt):
+- Sin clave de Groq (o Ollama), los títulos integrados son la
+  mejor frase del clip o "Clip destacado": nunca inventan, pero
+  tampoco son resúmenes de IA.
+- Un rostro real que NO esté en una esquina superior (p. ej.
+  centrado en el frame) también cae al vertical con aviso.
+- La división en 3+ personas está verificada con un render
+  directo del grafo ffmpeg; no hubo video real de 3 personas
+  para un trabajo completo por API (ver VERIFICADO.txt).
+
+Instalación: igual que siempre — cierra AdvvxClips por completo,
+descarga primero los clips que quieras guardar de la Biblioteca,
+borra la carpeta vieja, descomprime esta y corre iniciar.bat.
+Los proyectos creados en la 3.1.1 SIGUEN SIRVIENDO en la 3.1.2:
+no hay que recrearlos (los cambios son de render y de títulos,
+no de base de datos). Los clips ya renderizados en la 3.1.1 no
+cambian: para ver los arreglos hay que generar los clips de nuevo.
+
+AdvvxClips — CAMBIOS v3.1.1 (2026-11-12)
+==========================================
+
+v3.1.1 — hotfix del formato Dúo (sin cara):
+- En v3.1.0, cualquier render Dúo donde NO se detectaba cara fallaba
+  con "Undefined constant or missing '(' in 'w/2'" / "Failed to
+  configure input pad on Parsed_crop_1" / "Invalid argument": dos
+  expresiones de crop en app/media.py usaban variables `w`/`h` que
+  no existen en el filtro crop de ffmpeg. Arreglado (app/media.py):
+  el fallback de _face_crop ahora usa x="(iw-ow)/2", y="(ih-oh)/2",
+  y la rama Dúo sin cara usa crop x='(iw-ow)/2':y='(ih-oh)*0.2'
+  (recorte centrado en la parte superior). Verificado de punta a
+  punta por API con un video sin caras (pelota roja, 41,9 s, Dúo +
+  TikTok + Rápida): trabajo "done", 1 clip de 27,0 s, 1080x1920 a
+  30 fps con audio; cuadros revisados a mano (recorte centrado
+  arriba, contenido abajo, subtítulos quemados, logo abajo a la
+  derecha). Detalle en VERIFICADO.txt, sección 8.
+
+AdvvxClips — CAMBIOS v3.1.0 (2026-11-12)
+==========================================
+
+Antes: v3.0.0 (AdvvxClips, cuentas con aprobación, gaming, transcripción
+paralela, hosting Render). Esta actualización es la lista de 8 puntos
+aprobada por el usuario («Sí, arma la actualización»).
+
+v3.1.0 — "momentos, títulos que resumen y TikTok":
+1. Detector de momentos (app/highlight.py): cada candidato ahora lleva
+   su momento dominante — Risa, Discusión, Pelea, Gritos, Idea clave o
+   Dato curioso — detectado de lo que realmente se dice y de la energía
+   del audio (risas «jajaja», gritos sostenidos, insultos, frases cortas
+   exclamadas seguidas, ritmo rápido de intercambio). Un momento fuerte
+   suma hasta +18 al puntaje, así una pelea le gana a una charla
+   tranquila con palabras gancho. Diversidad por tipo: entre los 8 clips
+   entra al menos uno de cada tipo presente, y ninguna ventana larga se
+   traga un momento (la pelea queda como clip propio).
+2. Títulos que resumen (app/ai.py, app/highlight.py): nuevo
+   make_summary_title() — plantilla por momento («Se pelean en pleno
+   directo», «No aguantó la risa en el directo», «Discusión fuerte en el
+   directo»…), nunca una frase suelta con «jajaja» como título. El
+   prompt de IA (SYS) quedó endurecido: el título resume de qué trata el
+   fragmento, con su momento, 4–9 palabras, sin inventar nada que no se
+   diga y sin clickbait. Cada clip guarda además `summary`: una línea
+   con palabras literales del fragmento. La base de datos guarda
+   `moment` y `summary` por clip (migración automática) y la API los
+   devuelve (GET /api/clips: moment, summary, job_title, job_kind).
+3. Modo TikTok (app/config.py, app/pipeline.py): preset por defecto —
+   clips de 20–40 s, hasta 8 por video, que arrancan en el gancho.
+   `tiktok_mode` está en OVERRIDABLE: se puede apagar por trabajo o en
+   Ajustes, y entonces valen las duraciones propias.
+4. Formato Dúo / Reacción (app/media.py, app/tracking.py): layout
+   nuevo «duo» 9:16. Arriba la cara del que más se ve (seguida por
+   tracking de rostros), abajo el otro contenido (segundo rostro si lo
+   hay, si no el video completo). Sin rostro, recorte centrado.
+5. Cámara gaming con seguimiento de cara (app/media.py,
+   app/tracking.py): la cajita ya no es una esquina fija — sigue el
+   rostro detectado. CORRECCIÓN de verificación (v3.1.1, 2026-11-12):
+   en el clip de rdjavi el detector Haar veía «caras» en los personajes
+   del juego y la caja mostraba gameplay a los 14, 21 y 29 s. Ahora en
+   gaming solo se sigue un rostro detectado en al menos la mitad de los
+   frames (detected >= 0.5); si no, se usa la esquina fija, que es donde
+   está la cámara en un directo. Verificado: a los 21 y 29 s la caja ya
+   muestra la cara; a los 14 s muestra la ventanita de la cámara del
+   video original, que a ese instante solo trae torso y micrófono (la
+   cara no está en el video original ahí, el editor de TikTok la
+   recorta; eso no se puede arreglar desde aquí). requirements.txt fija
+   opencv-python-headless>=4.9,<5 (la 5.0 eliminó CascadeClassifier).
+6. Autenticidad: se mantienen risas y reacciones naturales, subtítulos
+   quemados tal cual se dijeron, título veraz sin clickbait y sin
+   sobreeditar. Los subtítulos no se cortan a media palabra
+   (pad_before/pad_after).
+7. Tarjetas estilo ClipviralesRD (web/app.js, app/server.py): cada clip
+   en una tarjeta con 🔥 puntaje viral, título grande en amarillo sobre
+   la miniatura, chip con el tipo de momento, una línea de resumen
+   debajo, duración, etiqueta de tipo y botones Editar y Exportar. Los
+   clips se agrupan por proyecto («Clips de este Live — …» para los
+   lives) y hay una sección «Tus Lives». «duo» está en la lista blanca
+   del re-render.
+8. Marca de agua (app/media.py, app/config.py, assets/): Ajustes >
+   Formato y subtítulos > «Marca de agua»: Logo ClipsViralesRD_ (por
+   defecto, abajo a la derecha, 220 px), Texto o Ninguna. El logo
+   (assets/clipsviralesrd-logo.png) se usa tal cual, con su fondo azul
+   que degrada a negro, sin quitarle el fondo. El Dockerfile ya copia
+   assets/ (antes no lo hacía y en Render caía a marca de texto).
+
+Límites honestos (verificados, no promesas):
+- Títulos del motor integrado (sin Ollama ni clave de API): son
+  plantillas por tipo de momento, NO palabras literales del fragmento.
+  Resumen el momento («Se pelean en pleno directo») pero no citan lo
+  dicho. Solo con IA configurada (Ollama local o Groq en Ajustes > IA)
+  los títulos salen de las palabras reales. El `summary` sí es siempre
+  una frase literal del fragmento.
+- Whisper no dice quién habla: «voces que se pisan» solo se aproxima
+  (frases cortas exclamadas seguidas, salto de energía, insultos). La
+  diarización real (quién dijo qué) queda fuera de esta versión.
+- El seguimiento de rostros usa Haar (OpenCV): con la cara pequeña
+  (cámara chiquita de un directo, gorra, gafas) a veces no la detecta y
+  la caja cae a la esquina fija. Si el video original mismo recorta la
+  cara en un instante (como a los 14 s del clip de rdjavi), ahí no hay
+  cara que mostrar.
+- Con el perfil Rápida (Whisper tiny) la detección automática de idioma
+  puede fallar: en una prueba detectó italiano en un directo en español
+  y el resumen salió con texto sin sentido. Con Alta (base) detectó
+  español bien. Para directos en español, mejor Alta o fijar el idioma
+  en «es» en Ajustes > Transcripción.
+- El editor no conserva la caja de cámara del formato gaming al
+  exportar (exporta el gameplay en vertical, sin la cajita). Igual que
+  en v3.0.0.
+- Las sesiones viven en memoria: al reiniciar el servidor hay que
+  volver a entrar. El link público necesita un servidor en internet;
+  el zip solo no lo da.
+
+Mediciones (verificación 2026-11-12, máquina de pruebas, CPU débil):
+- Dúo, video 60 s (Alta/base): 2 clips, 31,6 s y 22,7 s, 1080x1920 a
+  60 fps con audio, momento «Discusión», título «Discusión fuerte en
+  el directo». Cuadros revisados: arriba primer plano de la cara,
+  abajo el otro contenido, logo abajo a la derecha.
+- Gaming, video rdjavi 57,9 s (Rápida/tiny): 1 clip de 27,4 s,
+  1080x1920 a 30 fps con audio, momento «Discusión», score 94.
+- Prueba sintética de pelea (calma 0–16 s, pelea 40–56 s, energía
+  −42 vs −14 dB): la pelea queda como candidato propio 40,0–54,1 s,
+  score 91, momento «Pelea», título «Se pelean en pleno directo».
+- Blur (regresión): 1 clip de 26,9 s, 1080x1920 con audio; re-render
+  a «duo» OK. Detalle completo en VERIFICADO.txt.
+
+v3.0.0 (2026-11-10) — "el gran paso":
+- Renombrado completo a AdvvxClips (título, logo, textos, instalador).
+- Tema nuevo: azul que degrada en negro (antes morado/violeta).
+- Cuentas y perfiles: registro, login con sesión, primera cuenta =
+  administrador. Aprobación obligatoria para entrar (panel Usuarios).
+  Cada usuario ve solo sus proyectos, sus clips y sus ediciones.
+  Los ajustes generales y la actualización de yt-dlp son solo del admin.
+- Formato gaming: layout nuevo "gaming" 9:16. El gameplay llena el
+  vertical; la cámara (incrustada en el video original) se recorta de
+  la esquina elegida y se pone chiquita arriba a la izquierda con borde
+  azul. Opción "Esquina de la cámara" en Crear y en Ajustes.
+- Velocidad: transcripción en paralelo por trozos de 240 s con un
+  modelo por hilo (config: parallel_transcribe, por defecto sí; solo
+  se activa en audios de más de 5 min y PCs con 4+ núcleos).
+- Servidor listo para hosting: `python -m app --host 0.0.0.0` con
+  TBX_PUBLIC=1 acepta conexiones externas; la API siempre exige sesión.
+
+DESPLIEGUE GRATIS (2026-11-10, archivos incluidos en el zip):
+- Dockerfile + render.yaml + .dockerignore: listos para Render plan
+  gratis (link tipo https://advvxclips.onrender.com). Pasos en
+  render.yaml. El puerto ya se lee de la variable PORT.
+- PRUEBA con los límites de un servidor gratis (512 MB RAM, 0,5 CPU,
+  simulados con systemd): el servidor NO se cayó y completó trabajos
+  de punta a punta con Rápida (tiny, 1 clip) y con Alta (base, 1 clip
+  de 25 s, 1080x1920, 60 fps, formato gaming). PERO la memoria llegó
+  al límite: picos de ~400-600 MB medidos durante la transcripción,
+  o sea que en un gratis real va justo y con videos largos o varios
+  amigos a la vez se puede caer por falta de memoria. Además el plan
+  gratis se duerme a los 15 min sin uso (el primero que entre espera
+  1-2 min) y el disco es temporal: al reiniciarse se borran cuentas,
+  proyectos y clips. Veredicto honesto: aguanta para probar, no para
+  usarlo en serio todos los días; para eso hace falta el servidor
+  barato (unos $5/mes).
+- Para ponerlo en línea hacen falta una cuenta de GitHub y una de
+  Render (con el correo del usuario): eso no lo puede crear el
+  asistente por él.
+
+v2.2.0 (2026-11-09): perfil de calidad de clips (Alta 60 fps CRF 18 por defecto, Equilibrada,
+Rápida con Whisper tiny); Whisper en auto con CPU usa base en vez de small; descarga 720p
+por defecto. Sin licencia ni activación.
+PyAV fijado en 16.1.0 para evitar las incompatibilidades observadas.
